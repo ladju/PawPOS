@@ -1,0 +1,30 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Stylized Paw Print -->
+    <path
+        android:fillColor="#0D9488"
+        android:pathData="M0,0h108v108h-108z"/>
+    <!-- Center Pad -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,58 C45,58 38,65 38,72 C38,79 45,84 54,84 C63,84 70,79 70,72 C70,65 63,58 54,58 Z"/>
+    <!-- Toe 1 -->
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M37,47 C33,47 30,51 30,56 C30,61 33,65 37,65 C41,65 44,61 44,56 C44,51 41,47 37,47 Z"/>
+    <!-- Toe 2 -->
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M48,36 C44,36 41,40 41,45 C41,50 44,54 48,54 C52,54 55,50 55,45 C55,40 52,36 48,36 Z"/>
+    <!-- Toe 3 -->
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M60,36 C56,36 53,40 53,45 C53,50 56,54 60,54 C64,54 67,50 67,45 C67,40 64,36 60,36 Z"/>
+    <!-- Toe 4 -->
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M71,47 C67,47 64,51 64,56 C64,61 67,65 71,65 C75,65 78,61 78,56 C78,51 75,47 71,47 Z"/>
+</vector>

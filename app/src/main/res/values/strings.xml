@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">PawPOS Pet Shop</string>
+    <string name="pos_title">Cashier &amp; POS</string>
+    <string name="inventory_title">Inventory Control</string>
+    <string name="analytics_title">Sales &amp; Analytics</string>
+    <string name="scanner_title">Barcode Scanner</string>
+</resources>
