@@ -1,5 +1,6 @@
 package com.petshop.pos.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -7,9 +8,11 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -181,9 +185,16 @@ fun PosScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(products, key = { it.id }) { product ->
+                        val cartItem = uiState.cartItems.find { it.product.id == product.id }
                         ProductCard(
                             product = product,
-                            onAddToCart = { viewModel.addToCart(product) }
+                            inCartQuantity = cartItem?.quantity ?: 0,
+                            onAddToCart = { viewModel.addToCart(product) },
+                            onDecreaseQuantity = {
+                                if (cartItem != null) {
+                                    viewModel.updateQuantity(product.id, cartItem.quantity - 1)
+                                }
+                            }
                         )
                     }
                 }
@@ -247,15 +258,23 @@ fun PosScreen(
 @Composable
 fun ProductCard(
     product: ProductEntity,
-    onAddToCart: () -> Unit
+    inCartQuantity: Int = 0,
+    onAddToCart: () -> Unit,
+    onDecreaseQuantity: () -> Unit = {}
 ) {
+    val isAvailable = product.currentStock > 0 || product.productType == ProductType.SERVICE || product.category == PetCategory.SERVICES
+    val isInCart = inCartQuantity > 0
+
     Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isInCart) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surface
+        ),
+        border = if (isInCart) BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isInCart) 3.dp else 1.dp),
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = product.currentStock > 0 || product.productType == ProductType.SERVICE || product.category == PetCategory.SERVICES) {
+            .clickable(enabled = isAvailable) {
                 onAddToCart()
             }
     ) {
@@ -265,11 +284,18 @@ fun ProductCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "${product.category.icon} ${product.category.displayName}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        text = "${product.category.icon} ${product.category.displayName}",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
                 StockBadge(
                     currentStock = product.currentStock,
                     minAlert = product.minStockAlert,
@@ -303,27 +329,77 @@ fun ProductCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = formatCurrency(product.sellingPrice),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-
-                IconButton(
-                    onClick = onAddToCart,
-                    enabled = product.currentStock > 0 || product.productType == ProductType.SERVICE || product.category == PetCategory.SERVICES,
-                    colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = TealLight,
-                        contentColor = Teal40
-                    ),
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add",
-                        modifier = Modifier.size(18.dp)
+                Column {
+                    Text(
+                        text = formatCurrency(product.sellingPrice),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
                     )
+                }
+
+                if (isInCart) {
+                    // Tactile in-card counter: [-] qty [+]
+                    Surface(
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        shape = RoundedCornerShape(20.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                        ) {
+                            IconButton(
+                                onClick = onDecreaseQuantity,
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Remove,
+                                    contentDescription = "Decrease",
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                            Text(
+                                text = "$inCartQuantity",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.padding(horizontal = 4.dp)
+                            )
+                            IconButton(
+                                onClick = onAddToCart,
+                                enabled = isAvailable,
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = "Increase",
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    FilledIconButton(
+                        onClick = onAddToCart,
+                        enabled = isAvailable,
+                        colors = IconButtonDefaults.filledIconButtonColors(
+                            containerColor = TealLight,
+                            contentColor = Teal40,
+                            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                            disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                        ),
+                        shape = CircleShape,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Add to Cart",
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
             }
         }
@@ -628,27 +704,30 @@ fun CheckoutDialog(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Quick Cash Buttons: Exact, Rp 50rb, Rp 100rb, Rp 200rb
+                    // Quick Cash Buttons: Exact, +10k, +20k, +50k, 100k
+                    val currentTender = tenderInput.toDoubleOrNull() ?: 0.0
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         listOf(
                             "Uang Pas" to uiState.grandTotal,
-                            "50rb" to 50000.0,
-                            "100rb" to 100000.0,
-                            "200rb" to 200000.0
+                            "+10rb" to (currentTender + 10000.0),
+                            "+20rb" to (currentTender + 20000.0),
+                            "+50rb" to (currentTender + 50000.0),
+                            "100rb" to 100000.0
                         ).forEach { (label, amt) ->
                             OutlinedButton(
                                 onClick = {
-                                    tenderInput = amt.toLong().toString()
-                                    onCashTenderedChanged(amt)
+                                    val safeAmt = if (amt < 0) 0.0 else amt
+                                    tenderInput = safeAmt.toLong().toString()
+                                    onCashTenderedChanged(safeAmt)
                                 },
                                 shape = RoundedCornerShape(8.dp),
                                 modifier = Modifier.weight(1f),
-                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp)
+                                contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp)
                             ) {
-                                Text(label, fontSize = 12.sp)
+                                Text(label, fontSize = 11.sp, maxLines = 1, textAlign = TextAlign.Center)
                             }
                         }
                     }

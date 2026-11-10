@@ -6,6 +6,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -68,7 +69,7 @@ fun AnalyticsScreen(
                     title = "Gross Profit",
                     value = formatCurrency(uiState.dailySummary.totalProfit),
                     subtitle = "${uiState.dailySummary.itemsSold} items sold",
-                    icon = Icons.Default.TrendingUp,
+                    icon = Icons.AutoMirrored.Filled.TrendingUp,
                     iconTint = GreenSuccess,
                     modifier = Modifier.weight(1f)
                 )
